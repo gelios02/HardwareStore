@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block title %}Уведомления{% endblock %}
+{% block content %}
+<h2>Уведомления</h2>
+{% if notifications %}
+  <ul class="list-group">
+    {% for note in notifications %}
+    <li class="list-group-item">
+      <strong>{{ note.timestamp.strftime('%d-%m-%Y %H:%M') }}</strong>: {{ note.message }}
+      {% if not note.read %}
+        <span class="badge badge-info">Новые</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+{% else %}
+<p>Нет уведомлений</p>
+{% endif %}
+{% endblock %}

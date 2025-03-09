@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block title %}Редактировать товар{% endblock %}
+{% block content %}
+<h2>Редактировать товар</h2>
+<form method="POST" action="{{ url_for('admin_edit_product', product_id=product.id) }}">
+  <div class="form-group">
+    <label for="name">Название</label>
+    <input type="text" name="name" id="name" class="form-control" value="{{ product.name }}" required>
+  </div>
+  <div class="form-group">
+    <label for="description">Описание</label>
+    <textarea name="description" id="description" class="form-control" required>{{ product.description }}</textarea>
+  </div>
+  <div class="form-group">
+    <label for="price">Цена</label>
+    <input type="number" step="0.01" name="price" id="price" class="form-control" value="{{ product.price }}" required>
+  </div>
+  <div class="form-group">
+    <label for="quantity">Количество</label>
+    <input type="number" name="quantity" id="quantity" class="form-control" value="{{ product.quantity }}" required>
+  </div>
+  <div class="form-group">
+    <label for="image">Ссылка на изображение</label>
+    <input type="text" name="image" id="image" class="form-control" value="{{ product.image }}">
+  </div>
+  <div class="form-group">
+    <label for="category_id">Категория</label>
+    <select name="category_id" id="category_id" class="form-control">
+      {% for category in categories %}
+      <option value="{{ category.id }}" {% if category.id == product.category_id %}selected{% endif %}>{{ category.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary">Обновить товар</button>
+</form>
+{% endblock %}

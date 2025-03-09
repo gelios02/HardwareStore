@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block title %}Главная{% endblock %}
+{% block content %}
+<h1>Магазин компьютерных комплектующих</h1>
+<form method="GET" action="{{ url_for('index') }}" class="form-inline my-3">
+  <input type="text" name="q" value="{{ query }}" class="form-control mr-2" placeholder="Поиск...">
+  <select name="category" class="form-control mr-2">
+    <option value="">Все категории</option>
+    {% for cat in categories %}
+    <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary">Найти</button>
+</form>
+<div class="row">
+  {% for product in products %}
+  <div class="col-md-4">
+    <div class="card mb-4 {% if product.quantity <= 0 %}bg-secondary{% endif %}">
+      {% if product.images and product.images|length > 0 %}
+        <img src="{{ url_for('product_image', image_id=product.images[0].id) }}"
+             class="card-img-top" alt="{{ product.name }}">
+      {% else %}
+        <img src="https://via.placeholder.com/300x200?text=No+Image"
+             class="card-img-top" alt="No image">
+      {% endif %}
+      <div class="card-body">
+        <h5 class="card-title">{{ product.name }}</h5>
+        <p class="card-text">{{ product.description }}</p>
+        <p class="card-text">Цена: {{ product.price }} руб.</p>
+        <p class="card-text">Осталось: {{ product.quantity }}</p>
+        {% if product.quantity > 0 %}
+          <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-primary">Подробнее</a>
+        {% else %}
+          <span class="badge badge-light">Нет в наличии</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

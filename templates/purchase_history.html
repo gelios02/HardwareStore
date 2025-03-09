@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block title %}История покупок{% endblock %}
+{% block content %}
+<h2>История покупок</h2>
+{% if orders %}
+  <div class="list-group">
+    {% for order in orders %}
+    <div class="list-group-item">
+      <h5>Заказ #{{ order.id }} от {{ order.timestamp.strftime('%d-%m-%Y %H:%M') }}</h5>
+      <p>Статус: {{ order.status }}</p>
+      <ul>
+        {% for item in order.items %}
+        <li>{{ item.product.name }} - Количество: {{ item.quantity }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+<p>История покупок пуста</p>
+{% endif %}
+{% endblock %}
