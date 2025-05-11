@@ -196,6 +196,40 @@ def product_detail(product_id):
     product = Product.query.get_or_404(product_id)
     return render_template('product_detail.html', product=product)
 
+@app.route('/cart/update/<int:product_id>', methods=['POST'])
+@login_required
+def update_cart(product_id):
+    try:
+        new_qty = int(request.form.get('quantity', 1))
+    except ValueError:
+        flash('Неверное количество', 'danger')
+        return redirect(url_for('cart'))
+
+    cart = session.get('cart', {})
+    key = str(product_id)
+    if key in cart:
+        if new_qty > 0:
+            cart[key] = new_qty
+            flash('Количество обновлено', 'success')
+        else:
+            cart.pop(key)
+            flash('Товар удалён из корзины', 'warning')
+        session['cart'] = cart
+    return redirect(url_for('cart'))
+
+@app.route('/cart/remove/<int:product_id>', methods=['POST'])
+@login_required
+def remove_from_cart(product_id):
+    cart = session.get('cart', {})
+    key = str(product_id)
+    if key in cart:
+        cart.pop(key)
+        session['cart'] = cart
+        flash('Товар удалён из корзины', 'success')
+    else:
+        flash('Такого товара в корзине нет', 'warning')
+    return redirect(url_for('cart'))
+
 # Добавление товара в корзину
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
 @login_required
