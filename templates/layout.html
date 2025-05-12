@@ -3,39 +3,72 @@
 <head>
   <meta charset="utf-8">
   <title>{% block title %}Магазин{% endblock %}</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet"
+        href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <a class="navbar-brand" href="{{ url_for('index') }}">Магазин</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-          aria-controls="navbarNav" aria-expanded="false" aria-label="Переключить навигацию">
+  <button class="navbar-toggler" type="button" data-toggle="collapse"
+          data-target="#navbarNav" aria-controls="navbarNav"
+          aria-expanded="false" aria-label="Переключить навигацию">
     <span class="navbar-toggler-icon"></span>
   </button>
 
   <div class="collapse navbar-collapse" id="navbarNav">
-    <ul class="navbar-nav mr-auto">
+    <!-- Левая часть -->
+    <ul class="navbar-nav">
       {% if current_user.is_authenticated %}
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('cart') }}">Корзина</a></li>
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('orders') }}">Мои заказы</a></li>
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('purchase_history') }}">История покупок</a></li>
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('notifications') }}">
-          Уведомления
-          {% if unread_notifications_count > 0 %}
-            <span class="badge badge-danger">{{ unread_notifications_count }}</span>
-          {% endif %}
-        </a>
-      </li>
-      {% if current_user.role == 'admin' %}
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">Панель администратора</a></li>
-      {% endif %}
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Выход</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('cart') }}">Корзина</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('orders') }}">Мои заказы</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('purchase_history') }}">История покупок</a></li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('notifications') }}">
+            Уведомления
+            {% if unread_notifications_count > 0 %}
+              <span class="badge badge-danger">{{ unread_notifications_count }}</span>
+            {% endif %}
+          </a>
+        </li>
+        {% if current_user.role == 'admin' %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">Админка</a></li>
+        {% endif %}
       {% else %}
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Вход</a></li>
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Регистрация</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Вход</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Регистрация</a></li>
       {% endif %}
     </ul>
+
+    <!-- Правая часть: иконка профиля, имя, меню -->
+    {% if current_user.is_authenticated %}
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#"
+           id="profileDropdown" role="button"
+           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+          {% if current_user.avatar_data %}
+            <img src="{{ url_for('avatar', user_id=current_user.id) }}"
+                 class="rounded-circle"
+                 style="width:30px; height:30px; object-fit:cover; margin-right:8px;"
+                 alt="Аватар">
+          {% else %}
+            <span class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center"
+                  style="width:30px; height:30px; font-size:18px; margin-right:8px;">
+              👤
+            </span>
+          {% endif %}
+
+          {{ current_user.full_name or current_user.username }}
+        </a>
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="profileDropdown">
+          <a class="dropdown-item" href="{{ url_for('profile') }}">Профиль</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="{{ url_for('logout') }}">Выход</a>
+        </div>
+      </li>
+    </ul>
+    {% endif %}
   </div>
 </nav>
 

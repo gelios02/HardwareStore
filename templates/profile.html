@@ -1,0 +1,141 @@
+{% extends "layout.html" %}
+{% block title %}Мой профиль{% endblock %}
+
+{% block content %}
+<h2 class="mb-4 text-center">Мой профиль</h2>
+<div class="row justify-content-center">
+  <div class="col-md-6 text-center">
+    <!-- Аватар или дефолтная иконка -->
+    {% if user.avatar_data %}
+      <img
+        src="{{ url_for('avatar', user_id=user.id) }}"
+        class="rounded-circle mb-3"
+        style="width:150px; height:150px; object-fit:cover;"
+        alt="Аватар"
+      >
+    {% else %}
+      <span
+        class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center mb-3"
+        style="width:150px; height:150px; font-size:72px;"
+        role="img" aria-label="Профиль"
+      >👤</span>
+    {% endif %}
+
+    <!-- Форма загрузки аватара -->
+    <form method="POST" enctype="multipart/form-data">
+      <input
+        type="file"
+        name="avatar"
+        id="avatar"
+        accept="image/*"
+        hidden
+        onchange="this.form.submit()"
+      >
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        onclick="document.getElementById('avatar').click()"
+      >Загрузить аватар</button>
+      <input type="hidden" name="save_profile">
+    </form>
+
+    <hr class="my-4">
+
+    <!-- Форма редактирования ФИО, email, логина -->
+    <form method="POST">
+      <input type="hidden" name="save_profile">
+      <div class="form-group text-left">
+        <label for="full_name">ФИО</label>
+        <input
+          type="text"
+          id="full_name"
+          name="full_name"
+          class="form-control"
+          value="{{ user.full_name or '' }}"
+        >
+      </div>
+      <div class="form-group text-left">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          class="form-control"
+          value="{{ user.email }}"
+          required
+        >
+      </div>
+      <div class="form-group text-left">
+        <label for="username">Логин</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="form-control"
+          value="{{ user.username }}"
+          required
+        >
+      </div>
+      <button type="submit" class="btn btn-primary mt-2">Сохранить изменения</button>
+    </form>
+
+    <hr class="my-4">
+
+    <!-- Смена пароля -->
+    <h4 class="text-left">Сменить пароль</h4>
+    <form method="POST">
+      <input type="hidden" name="change_password">
+      <div class="form-group text-left">
+        <label for="current_password">Текущий пароль</label>
+        <input
+          type="password"
+          id="current_password"
+          name="current_password"
+          class="form-control"
+          required
+        >
+      </div>
+      <div class="form-group text-left">
+        <label for="new_password">Новый пароль</label>
+        <input
+          type="password"
+          id="new_password"
+          name="new_password"
+          class="form-control"
+          required
+        >
+      </div>
+      <div class="form-group text-left">
+        <label for="new_password2">Повтор нового пароля</label>
+        <input
+          type="password"
+          id="new_password2"
+          name="new_password2"
+          class="form-control"
+          required
+        >
+      </div>
+      <button type="submit" class="btn btn-warning mt-2">Изменить пароль</button>
+    </form>
+
+    <hr class="my-4">
+
+    <!-- История заказов -->
+    <h3 class="text-left">История заказов</h3>
+    {% if orders %}
+      <ul class="list-group text-left">
+        {% for order in orders %}
+          <li class="list-group-item">
+            <strong>Заказ #{{ order.id }}</strong>
+            от {{ order.timestamp.strftime('%d.%m.%Y %H:%M') }},
+            статус: <em>{{ order.status }}</em>.
+            <a href="{{ url_for('orders') }}#order-{{ order.id }}">Подробнее</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>У вас ещё нет оформленных заказов.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

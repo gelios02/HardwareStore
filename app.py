@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from flask import abort, Response
 import os
 
 app = Flask(__name__)
@@ -23,6 +24,9 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(50), default='user')  # 'admin' или 'user'
     notifications = db.relationship('Notification', backref='user', lazy=True)
+    full_name = db.Column(db.String(200), nullable=True)
+    avatar_data = db.Column(db.LargeBinary, nullable=True)
+    avatar_mime = db.Column(db.String(50), nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -139,16 +143,18 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user = User.query.filter_by(username=username).first()
+        email    = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        # Ищем пользователя по email вместо username
+        user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
             login_user(user)
             flash("Вход выполнен успешно!", "success")
             return redirect(url_for('index'))
         else:
-            flash("Неверные учетные данные", "danger")
+            flash("Неверный email или пароль", "danger")
     return render_template('login.html')
+
 
 @app.route('/logout')
 @login_required
@@ -189,6 +195,78 @@ def index():
     categories = Category.query.all()
     return render_template('index.html', products=products, categories=categories, query=query,
                            selected_category=category_id)
+
+from flask import abort, Response
+
+@app.route('/avatar/<int:user_id>')
+def avatar(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.avatar_data:
+        return Response(user.avatar_data, mimetype=user.avatar_mime)
+    # Если аватар не загружен — возвращаем 404, шаблон покажет иконку 👤
+    abort(404)
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    user = current_user
+
+    if request.method == 'POST':
+        # 1) Загрузка аватара
+        avatar = request.files.get('avatar')
+        if avatar and avatar.filename:
+            data = avatar.read()
+            user.avatar_data = data
+            user.avatar_mime = avatar.mimetype
+            db.session.commit()
+            flash('Аватар обновлён.', 'success')
+            return redirect(url_for('profile'))
+
+        # 2) Обновление ФИО/email/логина
+        if 'save_profile' in request.form:
+            # безопасно достаём поля — если их нет, получим пустую строку
+            full_name = request.form.get('full_name', '').strip() or None
+            new_email = request.form.get('email', '').strip().lower()
+            new_login = request.form.get('username', '').strip()
+
+            # проверка уникальности
+            if new_email and new_email != user.email:
+                if User.query.filter(User.email == new_email, User.id != user.id).first():
+                    flash('Этот email уже занят.', 'danger')
+                    return redirect(url_for('profile'))
+                user.email = new_email
+
+            if new_login and new_login != user.username:
+                if User.query.filter(User.username == new_login, User.id != user.id).first():
+                    flash('Этот логин уже занят.', 'danger')
+                    return redirect(url_for('profile'))
+                user.username = new_login
+
+            user.full_name = full_name
+            db.session.commit()
+            flash('Профиль обновлён.', 'success')
+            return redirect(url_for('profile'))
+
+        # 3) Смена пароля
+        if 'change_password' in request.form:
+            curr = request.form.get('current_password', '')
+            np1  = request.form.get('new_password', '')
+            np2  = request.form.get('new_password2', '')
+
+            if not user.check_password(curr):
+                flash('Текущий пароль неверный.', 'danger')
+            elif not np1 or np1 != np2:
+                flash('Новые пароли не совпадают.', 'danger')
+            else:
+                user.set_password(np1)
+                db.session.commit()
+                flash('Пароль изменён.', 'success')
+            return redirect(url_for('profile'))
+
+    # GET: просто отрисовать профиль
+    orders = Order.query.filter_by(user_id=user.id).order_by(Order.timestamp.desc()).all()
+    return render_template('profile.html', user=user, orders=orders)
+
 
 # Страница подробного просмотра товара
 @app.route('/product/<int:product_id>')

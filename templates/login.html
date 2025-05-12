@@ -1,15 +1,30 @@
 {% extends "layout.html" %}
 {% block title %}Вход{% endblock %}
+
 {% block content %}
 <h2>Вход</h2>
 <form method="POST" action="{{ url_for('login') }}">
   <div class="form-group">
-    <label for="username">Имя пользователя</label>
-    <input type="text" name="username" id="username" class="form-control" required>
+    <label for="email">Email</label>
+    <input
+      type="email"
+      name="email"
+      id="email"
+      class="form-control"
+      value="{{ request.form.email or '' }}"
+      required
+      autofocus
+    >
   </div>
   <div class="form-group">
     <label for="password">Пароль</label>
-    <input type="password" name="password" id="password" class="form-control" required>
+    <input
+      type="password"
+      name="password"
+      id="password"
+      class="form-control"
+      required
+    >
   </div>
   <button type="submit" class="btn btn-primary">Войти</button>
 </form>
