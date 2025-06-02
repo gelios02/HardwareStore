@@ -6,9 +6,15 @@ from datetime import datetime
 from flask import abort, Response
 import os
 
+
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))   # Абсолютный путь до папки с app.py
+DB_FILENAME = 'shop.db'                                  # Имя файла вашей базы
+DB_PATH = os.path.join(BASE_DIR, DB_FILENAME)
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shop.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DB_PATH
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 db = SQLAlchemy(app)
@@ -78,35 +84,29 @@ class Notification(db.Model):
 
 
 with app.app_context():
-    db.create_all()
+    if not os.path.exists(DB_PATH):
+        # Если файла shop.db нет — создаём все таблицы и добавляем начальные данные
+        db.create_all()
 
-    # Создаём учётную запись администратора, если не существует
-    admin_user = User.query.filter_by(username='admin').first()
-    if not admin_user:
-        admin_user = User(username='admin', email='admin@example.com', role='admin')
-        admin_user.set_password('adminpass')
-        db.session.add(admin_user)
+        # Создаём учётную запись администратора, если не существует
+        admin_user = User.query.filter_by(username='admin').first()
+        if not admin_user:
+            admin_user = User(username='admin', email='admin@example.com', role='admin')
+            admin_user.set_password('adminpass')
+            db.session.add(admin_user)
+            db.session.commit()
+            print("Admin user created: admin / adminpass")
+
+        # Создаём стандартные категории
+        DEFAULT_CATEGORIES = [
+            "Процессоры", "Видеокарты", "Материнские платы",
+            "Оперативная память", "Жесткие диски/SSD", "Корпуса",
+            "Блоки питания", "Кулеры", "Мониторы", "Ноутбуки", "Прочее"
+        ]
+        for cat_name in DEFAULT_CATEGORIES:
+            if not Category.query.filter_by(name=cat_name).first():
+                db.session.add(Category(name=cat_name))
         db.session.commit()
-        print("Admin user created: admin / adminpass")
-
-
-    DEFAULT_CATEGORIES = [
-        "Процессоры",
-        "Видеокарты",
-        "Материнские платы",
-        "Оперативная память",
-        "Жесткие диски/SSD",
-        "Корпуса",
-        "Блоки питания",
-        "Кулеры",
-        "Мониторы",
-        "Ноутбуки",
-        "Прочее"
-    ]
-    for cat_name in DEFAULT_CATEGORIES:
-        if not Category.query.filter_by(name=cat_name).first():
-            db.session.add(Category(name=cat_name))
-    db.session.commit()
 
 @login_manager.user_loader
 def load_user(user_id):
